@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 import random
 import math
@@ -6,60 +5,20 @@ import gc
 import matplotlib.pylab as plt
 import networkx as nx
 
-import time
-start_time = time.time()
 
-nodes = 250
-adjacency_matrix = np.zeros((nodes, nodes), dtype=np.int)
-print(adjacency_matrix.shape)
+def generate_graph(nodes, edge_probability):
+    adjacency_matrix = np.zeros((nodes, nodes))
+    edges = []
+    edges_cnt = 0
+    for i in range(nodes):
+        for j in range(i):
+            prob = random.random()
+            if prob < edge_probability:
+                adjacency_matrix[i, j] = 1
+                edges.append((i, j))
+                edges_cnt += 1
+    return adjacency_matrix, edges, edges_cnt
 
-edge_probability = .0085
-
-edges = []
-edges_cnt = 0
-for i in range(nodes):
-    for j in range(i):
-        prob = random.random()
-        if prob < edge_probability:
-            adjacency_matrix[i, j] = 1
-            edges.append((i, j))
-            edges_cnt += 1
-
-print(adjacency_matrix)
-
-print(edges[:10])
-print("Number of edges {}".format(edges_cnt))
-
-G = nx.Graph()
-G.add_nodes_from(list(range(0, nodes)))
-G.add_edges_from(edges)
-
-plt.figure(figsize=(12, 6))
-nx.draw(G, node_color='r', node_size=18, alpha=0.8)
-plt.show()
-
-# Vertex Cover Greedy Algorithm
-visited = np.zeros(nodes)
-cnt = 0
-for e in edges:
-    (u, v) = e
-    if (visited[u] == 0) & (visited[v] == 0):
-        visited[u] = 1
-        visited[v] = 1
-        cnt += 2
-
-print("Vertex cover consists of {} nodes".format(cnt))
-
-approximation_algo_result = cnt
-print(approximation_algo_result)
-
-n = nodes
-pop_total = int(50 * max(1, round(n / 5.0)))  # max population allowed in the environment
-pop_init = int(20 * max(1, round(n / 5.0)))
-max_iterate = int(7 * max(1, round(n / 5.0)))
-
-print("N = {}\nPopulation Total = {}\nPopulation Initial = {}\nMax Iteration = {}\n".format(n, pop_total, pop_init,
-                                                                                            max_iterate))
 
 def chromosomes_gen(n, k, pop_init):
     lst = []
@@ -225,7 +184,7 @@ def mfind(n, mutat_prob, pop_init, pop_total, max_iterate, edges, start, end):
     l = start
     h = end
     ans = 0
-    while (l <= h):
+    while l <= h:
         m = int((l + h) / 2.0)
         cost_value, result = environment(n, m, mutat_prob, pop_init, pop_total, max_iterate, edges)
         #         print("Cost is {} result is {}".format(cost_value,result))
@@ -237,8 +196,50 @@ def mfind(n, mutat_prob, pop_init, pop_total, max_iterate, edges, start, end):
     return result_dict
 
 
-free_memory()
-result = mfind(n, 0.05, pop_init, pop_total, max_iterate, edges, int(approximation_algo_result / 2), n)
+def draw_graph(adjacency_matrix, edges, edges_cnt, nodes):
+    # print(adjacency_matrix)
+    # print(edges[:10])
+    print("Number of edges {}".format(edges_cnt))
+    G = nx.Graph()
+    G.add_nodes_from(list(range(0, nodes)))
+    G.add_edges_from(edges)
+    plt.figure(figsize=(12, 6))
+    nx.draw(G, node_color='r', node_size=18, alpha=0.8)
+    plt.show()
 
-print(result.keys())
-print("My program took" + str(time.time() - start_time) + "to run")
+
+def greedy_algorithm(nodes, edges):
+    visited = np.zeros(nodes)
+    cnt = 0
+    for e in edges:
+        (u, v) = e
+        if (visited[u] == 0) & (visited[v] == 0):
+            visited[u] = 1
+            visited[v] = 1
+            cnt += 2
+    print("Vertex cover of the greedy algorithm consists {} nodes".format(cnt))
+    return cnt
+
+
+def main():
+    nodes = 250
+    edge_probability = .0085
+    adjacency_matrix, edges, edges_cnt = generate_graph(nodes, edge_probability)
+    draw_graph(adjacency_matrix, edges, edges_cnt, nodes)
+
+    approximation_algo_result = greedy_algorithm(nodes, edges)
+
+    n = nodes
+    pop_total = int(50 * max(1, round(n / 5.0)))  # max population allowed in the environment
+    pop_init = int(20 * max(1, round(n / 5.0)))
+    max_iterate = int(7 * max(1, round(n / 5.0)))
+    print("N = {}\nPopulation Total = {}\nPopulation Initial = {}\nMax Iteration = {}\n".format(n, pop_total, pop_init,
+                                                                                                max_iterate))
+
+    free_memory()
+    result = mfind(n, 0.05, pop_init, pop_total, max_iterate, edges, int(approximation_algo_result / 2), n)
+    print(result.keys())
+
+
+if __name__ == "__main__":
+    main()
