@@ -95,6 +95,15 @@ def generate_graph(nodes=100):
     return adjacency_matrix
 
 
+def isCover(s, graph):
+    n = len(graph)
+    for i in range(0, n):
+        for j in range(0, n):
+            if graph[i][j] == 1 and int(s[i]) == 0 and int(s[j]) == 0:
+                return False
+    return True
+
+
 # def main():
 graph = [[0, 1, 1, 0, 0, 0],
          [1, 0, 1, 1, 1, 1],

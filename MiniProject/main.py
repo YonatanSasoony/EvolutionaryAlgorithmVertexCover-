@@ -235,7 +235,6 @@ def main():
     max_iterate = int(7 * max(1, round(n / 5.0)))
     print("N = {}\nPopulation Total = {}\nPopulation Initial = {}\nMax Iteration = {}\n".format(n, pop_total, pop_init,
                                                                                                 max_iterate))
-
     free_memory()
     result = mfind(n, 0.05, pop_init, pop_total, max_iterate, edges, int(approximation_algo_result / 2), n)
     print(result.keys())
