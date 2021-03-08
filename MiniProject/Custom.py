@@ -3,6 +3,7 @@ import copy
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def default_fitness(cover, edges, covers):
     score = 1
     for edge in edges:
@@ -14,18 +15,6 @@ def default_fitness(cover, edges, covers):
         else:
             score += 2
     return score
-
-
-def fitness2(cover, edges, covers):
-    #  assume the optimal cover has less than 100 vertices.. otherwise he will get bad fitness  for it
-    #  and we will miss it
-    length = len(cover)
-    x = 100
-    for i in range(0, length):
-        if cover[i] == '1':
-            x = x - 1
-    result = 1/(1+np.exp((-1)*x))
-    return result
 
 
 def default_crossover(cover1, cover2):
