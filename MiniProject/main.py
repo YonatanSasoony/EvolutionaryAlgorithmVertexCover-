@@ -192,12 +192,6 @@ def uniform_crossover(cover1, cover2):
 
 def main():
 
-    cover1 = "0110100010"
-    cover2 = "1010001000"
-    (child1, child2) = uniform_crossover(cover1, cover2)
-    print(child1)
-    print(child2)
-
     nodes = 150
     edge_probability = .02
     adjacency_matrix, edges = generate_graph(nodes, edge_probability)
