@@ -15,10 +15,12 @@ class ArticleAlgo:
         self.generations_num = generations_num
 
     def get_min_vertex_cover(self):
-        algo_result = article_algorithm(self.nodes, self.edges, self.approximation_algo_result,
-                                        self.generations_num)
-        print("Vertex cover of the Article algorithm consists {} nodes".format(algo_result))
-        return algo_result
+        (cover, cover_count) = article_algorithm(self.nodes, self.edges, self.approximation_algo_result,
+                                                 self.generations_num)
+        print("Vertex cover of the Article algorithm consists {} nodes".format(cover_count))
+        print("###########################################################################")
+
+        return cover, cover_count
 
 
 def article_algorithm(nodes, edges, approximation_algo_result, generations_num):
@@ -35,9 +37,12 @@ def article_algorithm(nodes, edges, approximation_algo_result, generations_num):
                         nodes)
     print(result_dict.keys())
     cover_count = nodes
+    cover = ""
     for k in result_dict.keys():
         cover_count = min(cover_count, k)
-    return cover_count
+        if cover_count == k:
+            cover = result_dict[k]
+    return cover, cover_count
 
 
 def chromosomes_gen(n, k, pop_init):
@@ -68,7 +73,7 @@ def selection(lst, pop_total, n, edges):
     for i in range(len_lst):
         score.append(cost(lst[i], n, edges))
     sorted_index = np.argsort(score)
-    cnt = 0
+
     for i in range(len_lst):
         output_lst.append(lst[sorted_index[i]])
         if (i + 1) == pop_total:

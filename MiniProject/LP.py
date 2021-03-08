@@ -10,9 +10,11 @@ class LPAlgo:
         self.edges = edges
 
     def get_min_vertex_cover(self):
-        algo_result = lp_algorithm(self.nodes, self.edges)
-        print("Vertex cover of the LP algorithm consists {} nodes".format(algo_result))
-        return algo_result
+        (cover, cover_count) = lp_algorithm(self.nodes, self.edges)
+        print("Vertex cover of the LP algorithm consists {} nodes".format(cover_count))
+        print("###########################################################################")
+
+        return cover, cover_count
 
 
 def lp_algorithm(nodes, edges):
@@ -79,8 +81,7 @@ def lp_algorithm(nodes, edges):
     print("###########################################################################")
     prob.solve()
     print("###########################################################################")
+    cover = prob.solution.get_values()
+    cover_count = len(list(filter(lambda u: u == 1, cover)))
 
-    print("Solution result is: %s" % prob.solution.get_status_string())
-    print(prob.solution.get_values())
-    cover_count = len(list(filter(lambda u: u == 1, prob.solution.get_values())))
-    return cover_count
+    return cover, cover_count

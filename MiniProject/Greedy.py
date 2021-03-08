@@ -10,19 +10,20 @@ class GreedyAlgo:
         self.edges = edges
 
     def get_min_vertex_cover(self):
-        algo_result = greedy_algorithm(self.nodes, self.edges)
-        print("Vertex cover of the greedy algorithm consists {} nodes".format(algo_result))
+        (cover, cover_count) = greedy_algorithm(self.nodes, self.edges)
+        print("Vertex cover of the greedy algorithm consists {} nodes".format(cover_count))
+        print("###########################################################################")
 
-        return algo_result
+        return cover, cover_count
 
 
 def greedy_algorithm(nodes, edges):
-    visited = np.zeros(nodes)
+    cover = np.zeros(nodes)
     cover_count = 0
     for e in edges:
         (u, v) = e
-        if (visited[u] == 0) & (visited[v] == 0):
-            visited[u] = 1
-            visited[v] = 1
+        if (cover[u] == 0) & (cover[v] == 0):
+            cover[u] = 1
+            cover[v] = 1
             cover_count += 2
-    return cover_count
+    return cover, cover_count
