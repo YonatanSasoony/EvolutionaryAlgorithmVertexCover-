@@ -68,6 +68,19 @@ def draw_graph(edges, nodes):
 
 # Fitness #
 
+def fitness2(cover, edges, covers):
+    #  assume the optimal cover has less than 100 vertices.. otherwise he will get bad fitness  for it
+    #  and we will miss it
+    # maybe init x as greedy cover count?
+    length = len(cover)
+    x = 100
+    for i in range(length):
+        if cover[i] == 1:
+            x -= 1
+    result = 1 / (1 + np.exp(-x))
+    return result
+
+
 def fitness_revers_article(cover, edges, covers):
     obstacles = 1
     for e in edges:
