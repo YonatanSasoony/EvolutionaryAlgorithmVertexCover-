@@ -181,10 +181,10 @@ def cross_over_mutate_extended(lst, n, k, mutat_prob, pop_total, edges):
     return new_lst
 
 
-def environment(n, k, mutat_prob, pop_init, pop_total, max_iterate, edges):
+def environment(n, k, mutation_prob, pop_init, pop_total, max_iterate, edges):
     lst = chromosomes_gen(n, k, pop_init)
     for it in range(max_iterate):
-        lst = cross_over_mutate_extended(lst, n, k, mutat_prob, pop_total, edges)
+        lst = cross_over_mutate_extended(lst, n, k, mutation_prob, pop_total, edges)
         #         return
         lst, cost_value = selection(lst, pop_total, n, edges)
         if (it % 10) == 9:

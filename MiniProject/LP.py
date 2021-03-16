@@ -4,12 +4,12 @@ import cplex
 class LPAlgo:
 
     def __init__(self, adjacency_matrix, edges):
-        print("LP Algo!")
         self.adjacency_matrix = adjacency_matrix
         self.nodes = len(adjacency_matrix)
         self.edges = edges
 
     def get_min_vertex_cover(self):
+        print("LP Algo!")
         (cover, cover_count) = lp_algorithm(self.nodes, self.edges)
         print("Vertex cover of the LP algorithm consists {} nodes".format(cover_count))
         print("###########################################################################")
