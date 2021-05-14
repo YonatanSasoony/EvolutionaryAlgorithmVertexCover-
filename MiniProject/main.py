@@ -9,7 +9,6 @@ import Article
 import Greedy
 import LP
 import Custom
-import Alternative
 
 
 class Logger(object):
@@ -143,7 +142,7 @@ def fitness_cover_bonus(cover, edges, covers):
         if cover[u] == 0 and cover[v] == 0:
             score += 0
         elif cover[u] == 1 and cover[v] == 1:
-            score += 0
+            score += 1
         else:
             score += 5
     if is_cover(cover, edges):
@@ -231,12 +230,18 @@ def fitness_penalty(cover, edges, covers):
     cover_size = len(list(filter(lambda u: u == 1, cover)))
     m = 2 * len(cover)
     penalty = (m * uncovered + cover_size)
-    score = 1 / penalty * 10000
+    score = 10000 / penalty
 
     if is_cover(cover, edges):
         score += 10
     return score
 
+
+# cover1 - 01101|00010
+# cover2 - 10100|01000
+
+# child1 - 01101|01000
+# child2 - 10100|00010
 
 # Crossovers #
 
@@ -247,6 +252,7 @@ def fitness_penalty(cover, edges, covers):
 # child1 - 011|0001000
 # child2 - 101|0100010
 #
+
 def random_point_crossover(cover1, cover2):
     length = len(cover1)
     bit1 = random.randint(0, length - 1)
@@ -328,9 +334,28 @@ def random_uniform_crossover(cover1, cover2):
     return child1, child2
 
 
+def random_choice_crossover(cover1, cover2):
+    crossover = random.randint(0, 6)
+    if crossover == 3:
+        return random_uniform_crossover(cover1, cover2)
+    elif crossover == 2:
+        return uniform_crossover(cover1, cover2)
+    elif crossover == 1:
+        return double_point_crossover(cover1, cover2)
+    else:
+        return random_point_crossover(cover1, cover2)
+
+
 # Mutations #
 
 # more read here - https://www.tutorialspoint.com/genetic_algorithms/genetic_algorithms_mutation.htm
+
+def bit_flip_mutation(cover):
+    length = len(cover)
+    bit = random.randint(0, length - 1)
+    cover[bit] = 1 - cover[bit]
+    return cover
+
 
 def each_bit_mutation(cover, bit_prob):
     for bit in cover:
@@ -363,7 +388,7 @@ def inversion_mutation(cover):
 
     temp = cover[min(bit1, bit2):max(bit1, bit2)]
     reverse = reversed(temp)
-    cover = cover[min(bit1, bit2)] + reverse + cover[max(bit1, bit2) + 1: length]
+    cover = cover[0:min(bit1, bit2)] + reverse + cover[max(bit1, bit2) + 1: length]
 
     return cover
 
@@ -382,12 +407,24 @@ def scramble_mutation(cover):
     return cover
 
 
+def random_choice_mutation(cover, bit_prob):
+    mutation = random.randint(0, 6)
+    if mutation == 3:
+        return each_bit_mutation(cover, bit_prob)
+    elif mutation == 2:
+        return swap_mutation(cover)
+    elif mutation == 1:
+        return inversion_mutation(cover)
+    else:
+        return bit_flip_mutation(cover)
+
+
 def main():
     sys.stdout = Logger()
     print("")
     print("##############################################")
     print("##############################################")
-    print("##########"+str(datetime.datetime.now())+"##########")
+    print("##########" + str(datetime.datetime.now()) + "##########")
     print("##############################################")
     print("##############################################")
     print("")
@@ -396,94 +433,48 @@ def main():
     random_graph, random_edges = generate_graph(random_nodes, edge_probability)
 
     # graphs- from here http://networkrepository.com/dimacs.php
-
-    # benchmark_graph, benchmark_edges = get_known_graph('brock200-1')  # V-200 E-15K
-    benchmark_graph, benchmark_edges = get_known_graph('hamming6-4')  # V-64 E-704
+    # benchmark_graph, benchmark_edges = get_known_graph('hamming6-4')  # V-64 E-704
     # benchmark_graph, benchmark_edges = get_known_graph('johnson8-2-4')  # V-28 E-420
-    # benchmark_graph, benchmark_edges = get_known_graph('johnson16-2-4')  # V-120 E-5K
-    # benchmark_graph, benchmark_edges = get_known_graph('keller4')  # V-171 E-9K
+    benchmark_graph, benchmark_edges = get_known_graph('MANN-a9')  # V-45 E-918
+
     benchmark_nodes = len(benchmark_graph)
 
     # draw_graph(random_edges, random_nodes)
-    # draw_graph(benchmark_edges, benchmark_nodes)
-
-    random_degree_dict = create_degree_dict(random_nodes, random_edges)
-    benchmark_degree_dict = create_degree_dict(benchmark_nodes, benchmark_edges)
+    draw_graph(benchmark_edges, benchmark_nodes)
 
     greedy_algo = Greedy.GreedyAlgo(benchmark_graph, benchmark_edges)
     lp_algo = LP.LPAlgo(benchmark_graph, benchmark_edges)
     custom_algo = Custom.CustomAlgo(benchmark_graph, benchmark_edges)
 
+    greedy_algo_start_time = datetime.datetime.now()
     (cover_greedy, cover_count_greedy) = greedy_algo.get_min_vertex_cover()
+    greedy_algo_run_time = datetime.datetime.now() - greedy_algo_start_time
+    print("Greedy Algo runtime: " + str(greedy_algo_run_time))
+
+    article_algo = Article.ArticleAlgo(benchmark_graph, benchmark_edges, cover_count_greedy, 100)
+    lp_algo_start_time = datetime.datetime.now()
     (cover_lp, cover_count_lp) = lp_algo.get_min_vertex_cover()
+    lp_algo_run_time = datetime.datetime.now() - lp_algo_start_time
+    print("LP Algo runtime: " + str(lp_algo_run_time))
 
-    #
-    # (description, fitness_func, init_pop, fixed_cover, mutation_func, mutation_prob, crossover_func)
-    custom_algo_test_tuples = [
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=300, RANDOM COVERS, MUTATION PROB=0.1, DEFAULT CROSSOVER",
-         fitness_cover_count_ratio, 300, None, None, 0.1, None, 2000),
+    description = "GENERATIONS= 500, FITNESS COVER BONUS, POP=500, RANDOM COVERS, MUTATION PROB=0.05, RANDOM POINT " \
+                  "CROSSOVER "
+    custom_algo_start_time = datetime.datetime.now()
+    (cover_custom, cover_count_custom) = custom_algo.get_min_vertex_cover(description=description,
+                                                                          fitness_func=fitness_cover_bonus,
+                                                                          init_pop=500,
+                                                                          fixed_cover=None,
+                                                                          mutation_func=swap_mutation,
+                                                                          mutation_prob=0.05,
+                                                                          crossover_func=random_point_crossover,
+                                                                          num_generations=1000)
+    custom_algo_run_time = datetime.datetime.now() - custom_algo_start_time
+    print("Custom Algo runtime: " + str(custom_algo_run_time))
 
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=300, RANDOM COVERS, MUTATION PROB=0.05, RANDOM POINT CROSSOVER",
-         fitness_cover_count_ratio, 300, None, None, 0.05, random_point_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=400, RANDOM COVERS, MUTATION PROB=0.1, DOUBLE POINT CROSSOVER",
-         fitness_cover_count_ratio, 400, None, None, 0.1, double_point_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=300, RANDOM COVERS, MUTATION PROB=0.1, DOUBLE POINT CROSSOVER",
-         fitness_cover_count_ratio, 300, None, None, 0.05, double_point_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=400, GREEDY COVERS, SWAP MUTATION MUTATION PROB=0.1, DOUBLE POINT "
-         "CROSSOVER",
-         fitness_cover_count_ratio, 400, cover_greedy, swap_mutation, 0.1, double_point_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=400, GREEDY COVERS, SWAP MUTATION MUTATION PROB=0.05, "
-         "DOUBLE POINT CROSSOVER",
-         fitness_cover_count_ratio, 400, cover_greedy, swap_mutation, 0.05, double_point_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=400, RANDOM COVERS, SWAP MUTATION MUTATION PROB=0.1, "
-         "DOUBLE POINT CROSSOVER",
-         fitness_cover_count_ratio, 400, None, swap_mutation, 0.1, double_point_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=400, RANDOM COVERS, SWAP MUTATION MUTATION PROB=0.05, "
-         "DOUBLE POINT CROSSOVER",
-         fitness_cover_count_ratio, 400, None, swap_mutation, 0.05, double_point_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=300, RANDOM COVERS, MUTATION PROB=0.05, UNIFORM CROSSOVER",
-         fitness_cover_count_ratio, 300, None, None, 0.05, uniform_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS RATIO, POP=300, RANDOM COVERS, MUTATION PROB=0.05, RANDOM UNIFORM CROSSOVER",
-         fitness_cover_count_ratio, 300, None, None, 0.05, random_uniform_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS NEW ARTICLE, POP=300, RANDOM COVERS, MUTATION PROB=0.05, RANDOM UNIFORM CROSSOVER",
-         lambda cover, edges, covers: fitness_new_article(cover, edges, covers, benchmark_degree_dict),
-         300, None, None, 0.05, random_uniform_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS REVERSE, POP=300, RANDOM COVERS, MUTATION PROB=0.05, RANDOM UNIFORM CROSSOVER",
-         fitness_revers_article, 300, None, None, 0.05, random_uniform_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS SUM, POP=300, RANDOM COVERS, MUTATION PROB=0.05, RANDOM UNIFORM CROSSOVER",
-         fitness_sum, 300, None, None, 0.05, random_uniform_crossover, 2000),
-
-        ("GENERATIONS= 2000, FITNESS PENALTY, POP=300, RANDOM COVERS, MUTATION PROB=0.05, RANDOM UNIFORM CROSSOVER",
-         fitness_penalty, 300, None, None, 0.05, random_uniform_crossover, 2000),
-    ]
-
-    for description, fitness_func, init_pop, fixed_cover, mutation_func, mutation_prob, crossover_func, generations in \
-            custom_algo_test_tuples:
-        (cover_custom, cover_count_custom) = custom_algo.get_min_vertex_cover(description=description,
-                                                                              fitness_func=fitness_func,
-                                                                              init_pop=init_pop,
-                                                                              fixed_cover=fixed_cover,
-                                                                              mutation_func=mutation_func,
-                                                                              mutation_prob=mutation_prob,
-                                                                              crossover_func=crossover_func,
-                                                                              num_generations=generations)
-
-    # alternative_algo = Alternative.AlternativeAlgo(benchmark_graph, benchmark_edges)
-    # (cover_custom, cover_count_custom) = alternative_algo.get_min_vertex_cover(init_pop=200)
-
-    # article_algo = Article.ArticleAlgo(benchmark_graph, benchmark_edges, cover_count_greedy, 1000)
-    # (cover_article, cover_count_article) = article_algo.get_min_vertex_cover()
+    article_algo_start_time = datetime.datetime.now()
+    (cover_article, cover_count_article) = article_algo.get_min_vertex_cover()
+    article_algo_run_time = datetime.datetime.now() - article_algo_start_time
+    print("Article Algo runtime: " + str(article_algo_run_time))
 
 
 if __name__ == "__main__":

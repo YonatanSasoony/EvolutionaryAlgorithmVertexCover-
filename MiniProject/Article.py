@@ -2,7 +2,7 @@ import numpy as np
 import random
 import math
 import gc
-
+import datetime
 
 class ArticleAlgo:
 
@@ -211,8 +211,11 @@ def mfind(n, mutat_prob, pop_init, pop_total, max_iterate, edges, start, end):
     ans = 0
     while l <= h:
         m = int((l + h) / 2.0)
+        start_time = datetime.datetime.now()
         cost_value, result = environment(n, m, mutat_prob, pop_init, pop_total, max_iterate, edges)
         #         print("Cost is {} result is {}".format(cost_value,result))
+        run_time = datetime.datetime.now() - start_time
+        print("runtime: " + str(run_time))
         if cost_value == 0:
             result_dict[m] = result
             h = m - 1
